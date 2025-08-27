@@ -1,33 +1,40 @@
-
 # Welcome to your CDK Python project!
 
-# AWS CDK – Website Canary (Single URL)
+# AWS CDK – 3-URL Website Canary (Python)
 
-A tiny CDK project that deploys one Python **Lambda** to monitor **https://medilinks.com.au/** every 5 minutes and publishes:
-- **Availability** (1=success, 0=failure)
-- **LatencyMs** (milliseconds)
+This project deploys one Python **AWS Lambda** that checks the health of **three websites** every 5 minutes and sends two CloudWatch metrics per site:
 
-## Overview
-- Lambda handler: `canary.handler`
-- Schedule: EventBridge rule (every 5 min)
-- Metrics namespace: `Canary`, dimension: `SiteName=Medilinks`
-- Region set in `app.py` (use `ap-southeast-2`)
+- **Availability** – `1` (HTTP 2xx) or `0` (failure/timeout)
+- **LatencyMs** – end-to-end HTTP time in **milliseconds**
 
-## Prerequisites
-- Python 3.11/3.12, AWS CLI configured, Node.js + CDK (`npm i -g aws-cdk`)
+Default targets (editible in `modules/sites.json`):
+- **Medilinks** – https://medilinks.com.au/
+- **SkipQ** – https://www.skipq.org/
+- **LeetCode** – https://leetcode.com/
 
-## Setup & Deploy
-```bash
-python -m venv .venv
-# Git Bash:
-source .venv/Scripts/activate
-# PowerShell: .\.venv\Scripts\Activate.ps1
+---
 
-pip install -r requirements.txt
-# first time per account/region:
-cdk bootstrap aws://<account-id>/ap-southeast-2
-cdk synth
-cdk deploy
+## What gets deployed
+
+- **Lambda**: `WebCanary` (handler `canary.handler`)  
+  Reads `modules/sites.json`, probes each URL (with a friendly User-Agent), and publishes metrics to the **`Canary`** namespace with `SiteName=<name>`.
+
+- **EventBridge Rule**: `CanarySchedule` – runs **every 5 minutes**.
+
+- **CloudWatch Metrics** (per site):  
+  `Canary/Availability` (Average 5m) and `Canary/LatencyMs` (p95 5m).
+
+- **CloudWatch Alarms** (per site):  
+  - **Latency p95 > 2000 ms** (1× 5-minute period, missing data = not breaching)  
+  - **Availability < 1.0** (there was at least one failure in the 5-minute window)
+
+- **CloudWatch Dashboard**: `3url-canary-dashboard`  
+  One graph per site (Latency on left axis, Availability on right axis), two KPI tiles per site, plus an Alarm Status widget.
+
+---
+
+## Repo layout
+
 
 
 Enjoy!
