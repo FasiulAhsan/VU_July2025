@@ -1,6 +1,13 @@
+# Python
 .venv/
-cdk.out/
 __pycache__/
 *.pyc
-*.pem
-.env
+
+# AWS CDK
+cdk.out/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

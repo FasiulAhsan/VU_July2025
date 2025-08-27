@@ -1,43 +1,33 @@
 
 # Welcome to your CDK Python project!
 
-# AWS CDK Hello Lambda (Python)
+# AWS CDK – Website Canary (Single URL)
 
-A tiny AWS CDK project that deploys a Python **Lambda** function and prints:
+A tiny CDK project that deploys one Python **Lambda** to monitor **https://medilinks.com.au/** every 5 minutes and publishes:
+- **Availability** (1=success, 0=failure)
+- **LatencyMs** (milliseconds)
 
-Hello Lambda
-Md Fasiul Ahsan
+## Overview
+- Lambda handler: `canary.handler`
+- Schedule: EventBridge rule (every 5 min)
+- Metrics namespace: `Canary`, dimension: `SiteName=Medilinks`
+- Region set in `app.py` (use `ap-southeast-2`)
 
+## Prerequisites
+- Python 3.11/3.12, AWS CLI configured, Node.js + CDK (`npm i -g aws-cdk`)
 
-## 🧭 Overview
-- CDK (Python) creates one Lambda function.
-- Handler: `HelloWorld.lambda_handler`
-- Runtime: Python 3.12
-- Region: set in `app.py` via `env=cdk.Environment(...)` (recommend `ap-southeast-2`).
-
----
-
-## ✅ Prerequisites
-- AWS account + AWS CLI configured (`aws configure`)
-- Python 3.11/3.12
-- Node.js (for CDK CLI)
-- CDK CLI: `npm install -g aws-cdk`
-
----
-
-## 🚀 Deploy (Step by step with screenshots)
-
-### 1) Clone / open the project
-![Project in VS Code](docs\screenshots\hello-world-test.jpg)
-
-### 2) Create & activate virtual env, install dependencies
+## Setup & Deploy
 ```bash
 python -m venv .venv
 # Git Bash:
 source .venv/Scripts/activate
-# PowerShell:
-# .\.venv\Scripts\Activate.ps1
+# PowerShell: .\.venv\Scripts\Activate.ps1
 
 pip install -r requirements.txt
+# first time per account/region:
+cdk bootstrap aws://<account-id>/ap-southeast-2
+cdk synth
+cdk deploy
+
 
 Enjoy!
