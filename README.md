@@ -74,7 +74,7 @@ This diagram illustrates how all AWS services are connected:
 - Canary → CloudWatch → Alarms → SNS + DynamoDB  
 
 *(Insert architecture diagram here)*  
-![Architecture Diagram](docs\screenshots\WebHealth Monitoring Architecture.png)
+![Architecture Diagram](docs/screenshots/webhealth-architecture.png)
 
 ---
 
@@ -94,9 +94,10 @@ This diagram illustrates how all AWS services are connected:
 4. Alerts are sent to **SNS Topics** (Email/SMS).  
 5. **DynamoDB** logs incidents for auditing.  
 
-*(This screenshot should show your flow diagram with arrows between services.)*  
-![Flow Diagram](images/flow.png)
-
+## 🔄 Project Flow & Data
+![Medilinks Canary Dashboard](docs/screenshots/medilinks-canary-dashboard.jpg)
+![SkipQ Canary Dashboard](docs/screenshots/skipq-canary-dashboard.jpg)
+![LeetCode Canary Dashboard](docs/screenshots/leetcode-canary-dashboard.jpg)
 ---
 
 ## 📊 Dashboard & Alarms
@@ -110,9 +111,9 @@ This diagram illustrates how all AWS services are connected:
 - Dashboard → metrics in real time  
 - Alarm → example of triggered alert  
 
-![CloudWatch Dashboard](images/dashboard.png)  
-![CloudWatch Alarm](images/alarm.png)
-
+## 📊 Dashboard & Alarms
+![CloudWatch Dashboard](docs/screenshots/medilinks-canary-dashboard.jpg)
+![CloudWatch Alarm](docs/screenshots/leetcode-alarm.jpg)
 ---
 
 ## 🔒 Security & Non-Functional Requirements (NFRs)
@@ -123,7 +124,6 @@ To ensure system reliability and security:
 - Scalability ensured through serverless architecture  
 
 *(Screenshot: IAM Role details in AWS console)*  
-![IAM Role](images/iam-role.png)
 
 ---
 
@@ -135,8 +135,9 @@ To validate the monitoring system, **failure scenarios** were tested:
 
 Each failure correctly triggered alarms and **SNS notifications**.  
 
-*(Screenshot: example of triggered alarm + notification)*  
-![Failure Scenario Test](images/failure.png)
+## ⚠️ Forced Failure Scenarios
+![LeetCode Alarm](docs/screenshots/leetcode-alarm.jpg)
+![LeetCode Alarm via SNS](docs/screenshots/leetcode-alarm-sns.jpg)
 
 ---
 
