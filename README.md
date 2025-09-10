@@ -74,7 +74,7 @@ This diagram illustrates how all AWS services are connected:
 - Canary → CloudWatch → Alarms → SNS + DynamoDB  
 
 *(Insert architecture diagram here)*  
-![Architecture Diagram](D:\Victoria University\Block 3\Advance Project\VU_July2025\md_fasiul_ahsan\docs\screenshots\WebHealth Monitoring Architecture.png)
+![Architecture Diagram](docs\screenshots\WebHealth Monitoring Architecture.png)
 
 ---
 
