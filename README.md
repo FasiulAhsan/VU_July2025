@@ -52,6 +52,8 @@ It also:
      "reason": "ok"
    } -->
 
+![test](./docs/screenshots/webhealth-architecture.png)
+
 
 # Advanced DevOps Project – AWS Monitoring & Automation
 
