@@ -80,7 +80,7 @@ To validate the monitoring system, **failure scenarios** were tested:
 
 Each failure correctly triggered alarms and **SNS notifications**.  
 
-## ⚠️ Forced Failure Scenarios
+## ⚠️Failure Scenarios
 ![LeetCode Alarm](docs/screenshots/leetcode-alarm.jpg)
 ![LeetCode Alarm via SNS](docs/screenshots/leetcode-alarm-sns.jpg)
 
