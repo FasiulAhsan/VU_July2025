@@ -1,67 +1,15 @@
-# # md_fasiul_ahsan/modules/canary.py
-# import os
-# import time
-# import json
-# import urllib.request
-# import boto3
-
-# CW = boto3.client("cloudwatch")
-
-# URL = os.environ["TARGET_URL"]                 # e.g., https://medilinks.com.au/
-# NAMESPACE = os.environ.get("NAMESPACE", "Canary")
-# SITE = os.environ.get("SITE_NAME", "MainSite")
-# TIMEOUT = float(os.environ.get("TIMEOUT_SECONDS", "10"))
-
-# def _put(metric: str, value: float, unit: str | None = None):
-#     """Publish a single custom metric with an optional unit."""
-#     datum = {
-#         "MetricName": metric,
-#         "Value": float(value),
-#         "Dimensions": [{"Name": "SiteName", "Value": SITE}],  # dimension per site
-#     }
-#     if unit:
-#         datum["Unit"] = unit
-#     CW.put_metric_data(Namespace=NAMESPACE, MetricData=[datum])
-
-# def handler(event, context):
-#     start = time.perf_counter()
-#     ok = 0
-#     status = None
-#     reason = "ok"
-
-#     try:
-#         # User-Agent avoids occasional 403s from some sites/CDNs
-#         req = urllib.request.Request(URL, headers={"User-Agent": "Canary/1.0"})
-#         with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-#             status = r.status
-#             ok = 1 if 200 <= status < 300 else 0     # treat only 2xx as success
-#     except Exception as e:
-#         reason = f"{type(e).__name__}"
-
-#     latency_ms = (time.perf_counter() - start) * 1000.0
-
-#     # Publish metrics
-#     _put("LatencyMs", latency_ms, unit="Milliseconds")
-#     _put("Availability", ok)  # unitless Count is fine
-
-#     # Structured log for easy debugging
-#     print(json.dumps({
-#         "site": SITE,
-#         "url": URL,
-#         "ok": ok,
-#         "status": status,
-#         "latency_ms": round(latency_ms, 1),
-#         "reason": reason,
-#     }))
-
-#     return {"ok": ok, "latency_ms": round(latency_ms, 1), "status": status}
-
-
-
 import os, time, json, urllib.request, boto3
+from datetime import datetime
 
+# --- CloudWatch client (metrics) ---
 cw = boto3.client("cloudwatch")
 
+# --- Optional DynamoDB (enabled if TABLE_NAME is set in env by the stack) ---
+TABLE_NAME = os.environ.get("TABLE_NAME")
+ddb = boto3.resource("dynamodb") if TABLE_NAME else None
+table = ddb.Table(TABLE_NAME) if ddb else None
+
+# --- Config from env ---
 NAMESPACE = os.environ.get("NAMESPACE", "Canary")
 TIMEOUT = float(os.environ.get("TIMEOUT_SECONDS", "10"))
 
@@ -93,16 +41,21 @@ def probe(url: str):
     return ok, latency_ms, status, reason
 
 def handler(event, context):
-    """Run once per schedule; publish Availability + LatencyMs per SiteName."""
+    """Run once per schedule; publish Availability + LatencyMs per SiteName; optionally store to DynamoDB."""
     results = []
     sites = load_sites()
     print("loaded_sites:", [s["name"] for s in sites])
+
+    # Common timestamp for all items in this run
+    ping_time_iso = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    # Optional TTL (~14 days) if your table's TTL attribute is enabled
+    ttl_epoch = int(time.time()) + 14 * 24 * 60 * 60
 
     for s in sites:
         name, url = s["name"], s["url"]
         ok, lat_ms, status, reason = probe(url)
 
-        # send both metrics in one call (efficient)
+        # --- Publish both metrics in one call ---
         cw.put_metric_data(
             Namespace=NAMESPACE,
             MetricData=[
@@ -120,11 +73,29 @@ def handler(event, context):
             ],
         )
 
+        # --- Write one item per site to DynamoDB (if configured) ---
+        if table:
+            item = {
+                "SiteName": name,                              # PK
+                "PingTime": ping_time_iso,                     # SK (ISO timestamp)
+                "Ok": int(ok),
+                "LatencyMs": int(round(lat_ms)),               # store as int to avoid float/Decimal issues
+                "Status": int(status) if status is not None else 0,
+                "Reason": reason,
+                "TtlEpoch": ttl_epoch,                         # works with table TTL if enabled
+            }
+            try:
+                table.put_item(Item=item)
+            except Exception as e:
+                print(f"dynamodb_put_error site={name} err={type(e).__name__}")
+
+        # --- Structured log for CloudWatch Logs ---
         print(json.dumps({
             "site": name, "url": url, "ok": ok,
             "status": status, "latency_ms": round(lat_ms, 1),
-            "reason": reason
+            "reason": reason, "ping_time": ping_time_iso
         }))
+
         results.append({"site": name, "ok": ok, "latency_ms": round(lat_ms, 1)})
 
     return {"results": results}
