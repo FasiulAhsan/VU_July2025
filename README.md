@@ -72,7 +72,7 @@ To ensure system reliability and security:
 
 ---
 
-## ⚠️ Forced Failure Scenarios
+## ⚠️Alarm Failure Scenarios
 To validate the monitoring system, **failure scenarios** were tested:  
 1. **Shutting down EC2 instance** hosting the monitored site.  
 2. **Blocking inbound traffic** to simulate downtime.  
